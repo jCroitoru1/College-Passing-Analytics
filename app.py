@@ -270,8 +270,8 @@ def render_visuals() -> None:
 st.markdown(
     """
     <div class="hero">
-        <h1>CFB Analysis Lab</h1>
-        <p>Run the multi-model pipeline, inspect generated artifacts, and explore team and player outputs in one place.</p>
+        <h1>College Football Analysis Lab</h1>
+        <p>Explore Potential Changes and how College Offenses Work.</p>
     </div>
     """,
     unsafe_allow_html=True,

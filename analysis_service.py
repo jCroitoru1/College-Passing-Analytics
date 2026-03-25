@@ -23,8 +23,8 @@ MODEL_FILES = {
     "Winning Traits": "winning_traits",
     "Offense Output": "offense_output",
     "Offensive Scheme": "offense_scheme",
-    "Breakout": "breakout",
-    "Transfer": "transfer",
+    "Breakout Potential": "breakout",
+    "Transfer Potential": "transfer",
 }
 
 CORE_DATASETS = {
