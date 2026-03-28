@@ -145,6 +145,24 @@ def coerce_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     return working_df
 
 
+def prepare_size_column(df: pd.DataFrame, source_column: str, target_column: str) -> pd.DataFrame:
+    working_df = df.copy()
+    if source_column not in working_df.columns:
+        working_df[target_column] = 1.0
+        return working_df
+
+    size_series = pd.to_numeric(working_df[source_column], errors="coerce")
+    size_series = size_series.where(size_series > 0)
+
+    if size_series.notna().any():
+        fallback = float(size_series.min())
+    else:
+        fallback = 1.0
+
+    working_df[target_column] = size_series.fillna(fallback)
+    return working_df
+
+
 def format_metric_value(value: float | int | str | None) -> str:
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return "n/a"
@@ -318,6 +336,7 @@ def render_team_lab(team_df: pd.DataFrame) -> None:
         filtered_df = filtered_df[filtered_df["Conf"].astype(str) == selected_conf]
     if selected_scheme != "All":
         filtered_df = filtered_df[filtered_df["OffensiveScheme"].astype(str) == selected_scheme]
+    filtered_df = prepare_size_column(filtered_df, "team_total_yds", "_bubble_size")
 
     if filtered_df.empty:
         st.warning("The current filters returned no teams.")
@@ -327,7 +346,7 @@ def render_team_lab(team_df: pd.DataFrame) -> None:
         filtered_df,
         x="pass_rate",
         y="Off",
-        size="team_total_yds",
+        size="_bubble_size",
         color="OffensiveScheme" if "OffensiveScheme" in filtered_df.columns else None,
         hover_name="Team",
         hover_data=["Season", "Conf", "Pct", "elite_score", "team_total_td"],
@@ -335,7 +354,7 @@ def render_team_lab(team_df: pd.DataFrame) -> None:
         labels={
             "pass_rate": "Pass Rate",
             "Off": "Points Per Game",
-            "team_total_yds": "Total Yards",
+            "_bubble_size": "Total Yards",
         },
     )
     fig.update_traces(marker=dict(line=dict(width=1, color="white"), opacity=0.82))
@@ -409,6 +428,7 @@ def render_player_lab(player_df: pd.DataFrame) -> None:
     if selected_roles:
         filtered_df = filtered_df[filtered_df["Role"].astype(str).isin(selected_roles)]
     filtered_df = filtered_df[filtered_df["usage"].fillna(0) >= selected_min_usage]
+    filtered_df = prepare_size_column(filtered_df, "total_yds", "_bubble_size")
 
     if filtered_df.empty:
         st.warning("The current player filters returned no rows.")
@@ -418,13 +438,13 @@ def render_player_lab(player_df: pd.DataFrame) -> None:
         filtered_df,
         x="usage",
         y="explosive_index",
-        size="total_yds",
+        size="_bubble_size",
         color=selected_metric,
         hover_name="Player",
         hover_data=["Team", "Season", "Role", "total_td", "yds_growth", "td_growth"],
         color_continuous_scale="Viridis",
         title="How Usage And Explosiveness Relate To Future Signals",
-        labels={"usage": "Current Usage", "explosive_index": "Explosive Index", "total_yds": "Total Yards"},
+        labels={"usage": "Current Usage", "explosive_index": "Explosive Index", "_bubble_size": "Total Yards"},
     )
     fig.update_traces(marker=dict(opacity=0.80, line=dict(width=0.8, color="white")))
     st.plotly_chart(fig, use_container_width=True)
@@ -487,12 +507,13 @@ def render_candidate_lab(candidates_df: pd.DataFrame) -> None:
 
     top_n = st.slider("How many players to plot", min_value=10, max_value=min(100, len(filtered_df)), value=min(30, len(filtered_df)))
     ranked_df = filtered_df.sort_values(["breakout_probability", "transfer_probability"], ascending=False).head(top_n)
+    ranked_df = prepare_size_column(ranked_df, "usage", "_bubble_size")
 
     fig = px.scatter(
         ranked_df,
         x="breakout_probability",
         y="transfer_probability",
-        size="usage",
+        size="_bubble_size",
         color="Role" if "Role" in ranked_df.columns else None,
         hover_name="Player",
         hover_data=["Team", "Conf", "total_yds", "total_td", "explosive_index"],
@@ -500,7 +521,7 @@ def render_candidate_lab(candidates_df: pd.DataFrame) -> None:
         labels={
             "breakout_probability": "Breakout Probability",
             "transfer_probability": "Transfer Probability",
-            "usage": "Usage",
+            "_bubble_size": "Usage",
         },
     )
     fig.update_traces(marker=dict(opacity=0.84, line=dict(width=1, color="white")))
