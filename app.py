@@ -422,7 +422,7 @@ def render_player_lab(player_df: pd.DataFrame) -> None:
         color=selected_metric,
         hover_name="Player",
         hover_data=["Team", "Season", "Role", "total_td", "yds_growth", "td_growth"],
-        color_continuous_scale="Tealgrn",
+        color_continuous_scale="Viridis",
         title="How Usage And Explosiveness Relate To Future Signals",
         labels={"usage": "Current Usage", "explosive_index": "Explosive Index", "total_yds": "Total Yards"},
     )
